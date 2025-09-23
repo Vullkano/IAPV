@@ -10,6 +10,8 @@
 namespace iapv {
 namespace planning {
 
+using common::Vector2D;
+
 // Node for A* pathfinding
 struct Node {
     Vector2D position;

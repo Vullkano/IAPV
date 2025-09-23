@@ -157,7 +157,7 @@ common::Vector3D AvoidanceBehavior::calculate(common::Agent* agent, const std::v
         if (distance < totalRadius + avoidanceRadius_) {
             common::Vector3D diff = agent->getPosition() - obstacle.position;
             diff = diff.normalized();
-            diff = diff * (totalRadius + avoidanceRadius_) / distance;
+            diff = diff * ((totalRadius + avoidanceRadius_) / distance);
             steer = steer + diff;
         }
     }

@@ -7,6 +7,7 @@
 #include <queue>
 #include <functional>
 #include <memory>
+#include <set>
 
 namespace iapv {
 namespace communication {

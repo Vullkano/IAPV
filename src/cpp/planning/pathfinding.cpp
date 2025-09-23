@@ -5,6 +5,8 @@
 namespace iapv {
 namespace planning {
 
+using common::Vector2D;
+
 // GridWorld implementation
 GridWorld::GridWorld(int width, int height, float cellSize)
     : width_(width), height_(height), cellSize_(cellSize) {

@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <cmath>
 
 namespace iapv {
 namespace common {
