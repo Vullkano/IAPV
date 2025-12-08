@@ -1,0 +1,7 @@
+gymnasium
+imitation
+stable-baselines3
+numpy
+pygame
+streamlit
+matplotlib
