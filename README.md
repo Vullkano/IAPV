@@ -10,7 +10,7 @@ Imitation Learning Suite - IAPV Part 3
 [![Tech](https://img.shields.io/badge/tech-Streamlit%20|%20Gymnasium%20|%20SB3-purple)](https://streamlit.io/)
 
 Bem-vindo ao **IAPV Suite**, um ambiente premium para treino, avaliação e visualização de agentes de **Aprendizagem por Imitação** (Behavioral Cloning e GAIL).
-Este projeto foi desenhado para ser robusto, bonito e funcional, suportando tanto **GridWorld** como **CartPole**.
+Este projeto foi desenhado para ser robusto, **bonito** e funcional, com suporte a **GridWorld** e **CartPole**.
 
 
 ## ⚡ Instalação Rápida
