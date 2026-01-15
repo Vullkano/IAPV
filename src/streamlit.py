@@ -710,8 +710,13 @@ with tab_rec:
                         if st.session_state.ep_count >= d_episodes:
                             st.session_state.rec_state = "FINISHED"
                             
-                            folder_path = os.path.join(OUTPUT_DIR, "grid")
-                            file_name = "demos.pkl"
+                            st.session_state.rec_state = "FINISHED"
+                            
+                            # Use correct path defined globally (demos_file)
+                            # This ensures it matches what Train tab looks for (grid/{mode}/simple/demos.pkl)
+                            target_save_path = demos_file
+                            folder_path = os.path.dirname(target_save_path)
+                            file_name = os.path.basename(target_save_path)
                             
                             try:
                                 os.makedirs(folder_path, exist_ok=True)
