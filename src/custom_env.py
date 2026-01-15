@@ -5,10 +5,12 @@ import numpy as np
 class GridWorldEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
-    def __init__(self, render_mode=None, size=8, n_walls=10):
+    def __init__(self, render_mode=None, size=8, n_walls=10, random_start=True):
         self.size = size
         self.n_walls = n_walls
         self.window_size = 512
+        self.random_start = random_start
+        self.fixed_start = np.array([0, 0])  # Fixed spawn position
 
         # Observation Space (8 values):
         # 0: Agent Row
@@ -29,7 +31,7 @@ class GridWorldEnv(gym.Env):
         # Box is safer for PPO MlpPolicy usually.
         low = np.array([0, 0, 0, 0, 0, 0, -size + 1, -size + 1])
         high = np.array([size - 1, size - 1, 1, 1, 1, 1, size - 1, size - 1])
-        self.observation_space = spaces.Box(low=low, high=high, dtype=np.int32)
+        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
 
         # Actions: 0=Up, 1=Down, 2=Left, 3=Right (Standard mapping attempt, but let's stick to vectors)
         # Let's use the fixed vectors from previous fix to ensure keys work:
@@ -84,7 +86,7 @@ class GridWorldEnv(gym.Env):
             wall_r,
             rel_target[0],
             rel_target[1]
-        ], dtype=np.int32)
+        ], dtype=np.float32)
         
         return obs
     
@@ -119,16 +121,29 @@ class GridWorldEnv(gym.Env):
         wall_indices = self.np_random.choice(len(possible_locs), n_walls, replace=False)
         self._obstacles = set([possible_locs[i] for i in wall_indices]) # Set for fast lookup
         
-        # Place Agent (not on wall, not on target)
-        # Remaining spots
-        valid_starts = [loc for loc in possible_locs if loc not in self._obstacles]
-        if not valid_starts:
-             # Should not happen with proper n_walls checks but safety fallback
-             self._obstacles = set()
-             valid_starts = [loc for loc in possible_locs]
-             
-        start_idx = self.np_random.choice(len(valid_starts))
-        self._agent_location = np.array(valid_starts[start_idx])
+        # Place Agent (FIXED or RANDOM based on mode)
+        if self.random_start:
+            # Random spawn: choose from valid positions
+            valid_starts = [loc for loc in possible_locs if loc not in self._obstacles]
+            if not valid_starts:
+                # Should not happen with proper n_walls checks but safety fallback
+                self._obstacles = set()
+                valid_starts = [loc for loc in possible_locs]
+                
+            start_idx = self.np_random.choice(len(valid_starts))
+            self._agent_location = np.array(valid_starts[start_idx])
+        else:
+            # Fixed spawn: always use fixed_start position
+            # Ensure fixed position is not blocked by obstacle or target
+            if tuple(self.fixed_start) in self._obstacles:
+                self._obstacles.discard(tuple(self.fixed_start))
+            if np.array_equal(self.fixed_start, self._target_location):
+                # Regenerate target if it conflicts with fixed start
+                valid_targets = [loc for loc in possible_locs if loc != tuple(self.fixed_start) and loc not in self._obstacles]
+                if valid_targets:
+                    self._target_location = np.array(valid_targets[self.np_random.choice(len(valid_targets))])
+            
+            self._agent_location = self.fixed_start.copy()
         
         observation = self._get_obs()
         info = self._get_info()

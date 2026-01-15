@@ -1,8 +1,3 @@
-<!--
-Imitation Learning Suite - IAPV Part 3
-======================================
--->
-
 # 🧠 IAPV Suite - Imitation Learning
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python)](https://www.python.org/) 
@@ -10,111 +5,141 @@ Imitation Learning Suite - IAPV Part 3
 [![Tech](https://img.shields.io/badge/tech-Streamlit%20|%20Gymnasium%20|%20SB3-purple)](https://streamlit.io/)
 
 Bem-vindo ao **IAPV Suite**, um ambiente premium para treino, avaliação e visualização de agentes de **Aprendizagem por Imitação** (Behavioral Cloning e GAIL).
-Este projeto foi desenhado para ser robusto, bonito e funcional, suportando tanto **GridWorld** como **CartPole**.
+Este projeto foi desenhado sob uma filosofia de "AI Lab", oferecendo uma interface profissional e robusta para estudar o comportamento de agentes no **GridWorld** e no **CartPole**.
 
+---
 
 ## ⚡ Instalação Rápida
 
 ```bash
-# 1. Instalar dependências
+# 1. Instalar dependências (Gymnasium, SB3, Streamlit, etc)
 pip install -r requirements.txt
 ```
 
+---
 
-## 🖥️ Modo 1: Interface Web (Streamlit)
+## 🖥️ Modo 1: Interface Web (Streamlit - "AI LAB")
 
-A experiência recomendada. Uma interface moderna ("Premium UI") que centraliza todo o fluxo de trabalho.
+A experiência central do projeto. Uma interface moderna com estética *Dark Mode* e *Glassmorphism* que centraliza todo o fluxo de trabalho de um investigador de IA.
 
 ```bash
 streamlit run src/streamlit.py
 ```
 
 ### ✨ Funcionalidades Premium
-*   **Dashboard Intuitivo:** Visão geral do estado do sistema.
-*   **Gravação Avançada:** Controlo D-Pad para GridWorld e geração automática via HuggingFace para CartPole.
-*   **Terminal em Tempo Real:** Acompanhe o treino (train.py) diretamente no browser com logs limpos e organizados.
-*   **Visualização:** Teste os modelos treinados com feedback visual imediato.
 
+*   **Mission Control UI:** Painéis de controlo estilizados para gravação e treino, com feedback visual em tempo real.
+*   **Modo de Spawn (GridWorld):** Alternância entre spawn **Aleatório** (🎲) e **Fixo** (📍) para testar a capacidade de generalização.
+*   **Gravação Híbrida:** 
+    *   **GridWorld:** Controlo via D-Pad (Web) ou CLI (Teclado).
+    *   **CartPole:** Geração automática via HuggingFace ou modo manual experimental com mapping de setas.
+*   **Laboratório de Treino:** Configuração dinâmica de parâmetros (Epochs, Seeds, Validação) com logs estilo terminal integrados.
+*   **Robustez Estatística:** Sistema automático de validação que utiliza janelas de sementes dinâmicas (`seed + i`) para gerar distribuições de recompensa reais no box plot.
+*   **Benchmark Automatizado:** Treino em batch com datasets incrementais para analisar curvas de aprendizagem.
+
+---
+
+## 📊 Análise de Robustez e Optimização
+
+O IAPV Suite implementa várias melhorias para garantir resultados académicos e tempos de execução rápidos:
+
+1.  **Epochs Diferenciadas:** 
+    *   **CartPole:** Otimizado para **10 Epochs** (Suficiente para convergência rápida devido à qualidade dos dados).
+    *   **GridWorld:** Padrão de **100 Epochs** para garantir a resolução de labirintos complexos.
+2.  **Validação Stochastic:** O sistema de benchmark corre agora **20 simulações** por modelo. Cada simulação usa uma semente diferente derivada da semente base (`base_seed + 1000 + i`), garantindo que o **Box Plot de Robustez** mostre uma variabilidade real do ambiente e não apenas a repetição do mesmo cenário.
+
+---
 
 ## ⌨️ Modo 2: Linha de Comandos (CLI)
 
-Para automação e cumprimento estrito dos requisitos do projeto. Todos os scripts funcionam de forma independente.
+Todos os scripts são utilizáveis de forma independente para integração em pipelines ou scripts de shell.
 
 ### 1. Gravar Demonstrações (`demos.py`)
-Recolhe dados de um especialista (humano ou AI).
+Recolhe trajetórias de um especialista.
 
 ```bash
-# GridWorld (Manual - Use as Setas do Teclado)
-python src/demos.py --gym Custom --episodes 10 --file output/demos_grid.pkl
+# GridWorld: Spawn Aleatório (Use as SETAS do teclado)
+python src/demos.py --gym Custom --episodes 10 --file output/grid/random/simple/demos.pkl --spawn random
 
-# CartPole (Automático - Agente Pre-treinado HuggingFace)
-python src/demos.py --gym CartPole --episodes 50 --file output/demos_cartpole.pkl --use-pretrained
+# CartPole: Gerar via Agente HuggingFace (Totalmente automático)
+python src/demos.py --gym CartPole --episodes 50 --file output/cartpole/demos.pkl --use-pretrained
+
+# CartPole: Treinar MANUALMENTE (Para diversão/teste)
+python src/demos.py --gym CartPole --episodes 3 --file output/cartpole/manual_test.pkl
 ```
 
 ### 2. Treinar Agente (`train.py`)
-Treina um modelo (BC ou GAIL) usando os dados recolhidos.
+Lê as demonstrações (`.pkl`) e gera o modelo neuronal (`.zip`).
 
 ```bash
-# Treinar BC no GridWorld (100 Épocas)
-python src/train.py --gym Custom --file output/demos_grid.pkl --output output/bc_grid.zip --algorithm BC --epochs 100
+# Treinar BC no GridWorld (Spawn Aleatório) com Seed específica
+python src/train.py --gym Custom --file output/grid/random/simple/demos.pkl --output output/grid/random/simple/bc_grid.zip --algorithm BC --epochs 100 --spawn random --seed 42
 
-# Treinar GAIL no CartPole (200.000 Timesteps)
-python src/train.py --gym CartPole --file output/demos_cartpole.pkl --output output/gail_cartpole.zip --algorithm GAIL --epochs 200
+# Treinar GAIL no CartPole (Rápido: 10 épocas)
+python src/train.py --gym CartPole --file output/cartpole/demos.pkl --output output/cartpole/gail_cartpole.zip --algorithm GAIL --epochs 10
 ```
 
-### 3. Executar & Visualizar (`run.py`)
-Executa a política treinada no ambiente. Suporta modo interativo (passo-a-passo).
+### 3. Visualizar o Resultado (`run.py`)
+Executa a política aprendida e mostra o agente em ação.
 
 ```bash
-# Modo Contínuo (Execução Normal)
-python src/run.py --file output/bc_grid.zip --gym Custom --algorithm BC --mode continuous
+# GridWorld: Modo Passo-a-Passo (Pressione ENTER para cada passo)
+python src/run.py --file output/grid/random/simple/bc_grid.zip --gym Custom --algorithm BC --mode step --spawn random
 
-# Modo Passo-a-Passo (Pressione Enter para avançar)
-python src/run.py --file output/bc_grid.zip --gym Custom --algorithm BC --mode step
+# CartPole: Visualização Contínua
+python src/run.py --file output/cartpole/gail_cartpole.zip --gym CartPole --algorithm GAIL --mode continuous
 ```
 
+---
 
-## 📜 Descrição Detalhada dos Ficheiros
+## 📁 Estrutura de Diretórios Standard
 
-Para quem quer entender como o projeto funciona "por dentro", aqui está a explicação de cada componente:
-
-### 🔹 Core (Obrigatórios)
-
-| Ficheiro | Função |
-| :--- | :--- |
-| **`src/demos.py`** | **O "Gravador".** Responsável por recolher demonstrações. No GridWorld, captura os inputs das setas. No CartPole, carrega um agente especialista da HuggingFace para gerar dados perfeitos automaticamente. |
-| **`src/train.py`** | **O "Cérebro".** Lê os dados gravados (`.pkl`) e treina um novo modelo. Suporta **BC** (Behavioral Cloning - Aprendizagem Supervisionada) e **GAIL** (Adversarial Learning). Guarda o resultado em `.zip`. |
-| **`src/run.py`** | **O "Visualizador".** Carrega um modelo treinado (`.zip`) e coloca-o a interagir com o ambiente. Calcula métricas como taxa de sucesso e passos médios. Suporta execução passo-a-passo. |
-
-### 🔹 Extras (Premium)
-
-| Ficheiro | Função |
-| :--- | :--- |
-| **`src/streamlit.py`** | **O "Maestro".** Uma interface gráfica completa que une todos os scripts acima. Permite gravar, treinar e visualizar sem tocar no terminal. Inclui um dashboard e logs em tempo real. |
-| **`src/custom_env.py`** | **O "Mundo".** A lógica do ambiente GridWorld. Define as regras do jogo: grelha 8x8, agente (2), objetivo (3), obstáculos (1) e recompensas. |
-
-## 📁 Árvore do Projeto
+O Suite organiza automaticamente os ficheiros para evitar conflitos de dados:
 
 ```text
 IAPV/
-├── output/                   # 💾 Onde TUDO é guardado (Dados & Modelos)
-│   ├── demos_grid.pkl        # Dados de demonstração
-│   ├── bc_grid.zip           # Modelo treinado
-│   └── ...
+├── output/
+│   ├── grid/                    # 🧭 Ambiente GridWorld
+│   │   ├── random/              # Spawn Aleatório (Pasta Principal)
+│   │   │   ├── simple/              # Testes Únicos
+│   │   │   └── intervals/           # Benchmark Data & Plots
+│   │   └── fixed/               # Spawn Fixo (📍)
+│   └── cartpole/                # 🕹️ Ambiente CartPole
+│       ├── demos.pkl            # Dataset Principal
+│       ├── manual_test.pkl      # Testes Manuais
+│       └── intervals/           # Modelos de Benchmark (1, 2, 3... demos)
 │
-├── src/
-│   ├── streamlit.py          # 🌐 Interface Principal
-│   ├── demos.py              # 🎮 Script Gravação
-│   ├── train.py              # 🧠 Script Treino
-│   ├── run.py                # 🏃 Script Execução
-│   ├── custom_env.py         # Lógica GridWorld
-│   └── assets/               # 🎨 Estilos
+├── docs/                        # 🖼️ Documentação e Gráficos
+│   └── plots/                   # Gráficos de Sucesso, Reward e Robustez
 │
-└── requirements.txt          # Dependências do Python
+├── src/                         # 🛠️ Código Fonte
+│   ├── streamlit.py             # Interface (O Maestro)
+│   ├── demos.py                 # Gravador
+│   ├── train.py                 # Treinador
+│   ├── run.py                   # Visualizador
+│   ├── custom_env.py            # Lógica Gymnasium
+│   └── extras/                  # Motor de Benchmark e Plots
 ```
 
+---
+
+## 📜 Glossário de Ficheiros
+
+*   **`.pkl` (Demos):** É a "cassete" com os dados brutos. Se abrires, verás as observações e ações do especialista. É a matéria-prima para o treino.
+*   **`.zip` (Modelos):** É o "cérebro" treinado. Contém os pesos da rede neuronal que o agente usa para decidir que ação tomar em cada estado.
+
+---
+
+## 🚀 Notas de Execução
+
+- **Teclado (Manual):** Nos modos manuais (`demos.py`), utilize as **Setas** para movimento. Pressione **ESC** para sair antecipadamente e salvar os dados recolhidos até ao momento.
+- **Gráficos:** No tab "Relatório", utilize o botão **"Atualizar Gráficos"** após o treino em batch para regenerar as imagens em `docs/plots/`.
+- **Compatibilidade:** O código utiliza as versões mais recentes do **Gymnasium** e **Stable Baselines 3**, garantindo longevidade e suporte a novas funcionalidades de RL.
+
+---
 
 ## 👤 Autores
-Trabalho realizado no âmbito da UC de **IAPV**.
+
+Trabalho desenvolvido para a Unidade Curricular de **IAPV**.
 - Diogo Alexandre Alonso de Freitas (Nº104841)
 - João Francisco Marques Gonçalves da Silva Botas (Nº104782)

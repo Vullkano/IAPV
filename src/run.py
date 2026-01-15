@@ -12,39 +12,75 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from gymnasium.envs.registration import register
 
 # Register GridWorld (Copying registration logic to be standalone)
-GRID_SIZE = 8
+try:
+    from demos import GRID_SIZE
+except ImportError:
+    GRID_SIZE = 8 # Fallback
+
 LIMIT_STEPS = int(((GRID_SIZE * GRID_SIZE) / 2) / 10) * 10
 try:
     import custom_env
-    register(
-        id="GridWorld-v0",
-        entry_point="custom_env:GridWorldEnv",
-        max_episode_steps=LIMIT_STEPS,
-        kwargs={'size': GRID_SIZE}
-    )
+    # GridWorld is registered dynamically in run_policy with spawn mode
 except Exception:
     pass
 
-def run_policy(policy_path, env_name, algorithm, mode):
+def run_policy(policy_path, env_name, algorithm, mode, spawn_mode="random"):
     print(f"\n--- RUNNING POLICY ---")
     print(f"Policy: {policy_path}")
     print(f"Env: {env_name}")
     print(f"Mode: {mode}")
+    if env_name == "Custom":
+        print(f"Spawn Mode: {spawn_mode}")
     print("-" * 30)
 
     # 1. Load Env
+    if env_name == "Custom":
+        # Register GridWorld with spawn mode
+        random_start = (spawn_mode == "random")
+        try:
+            register(
+                id="GridWorld-v0",
+                entry_point="custom_env:GridWorldEnv",
+                max_episode_steps=LIMIT_STEPS,
+                kwargs={'size': GRID_SIZE, 'random_start': random_start}
+            )
+        except:
+            pass
+        gym_id = "GridWorld-v0"
+    elif env_name == "CartPole":
+        gym_id = "CartPole-v1"
+    else:
+        gym_id = env_name
+
     render_mode = "human"
-    env = gym.make(env_name, render_mode=render_mode)
+    env = gym.make(gym_id, render_mode=render_mode)
     
     # 2. Load Model
     try:
+        # Patch torch.load to handle weights_only=True default in newer PyTorch
+        _original_load = torch.load
+        def _safe_load(*args, **kwargs):
+            if 'weights_only' not in kwargs:
+                kwargs['weights_only'] = False
+            return _original_load(*args, **kwargs)
+        torch.load = _safe_load
+
         if algorithm == "BC":
-            model = bc.reconstruct_policy(policy_path)
+            # BC saves a standard FeedForward/ActorCritic policy. 
+            # reconstruct_policy is for full algorithm checkpoints, but we saved policy directly.
+            # Try loading as a generic ActorCriticPolicy
+            from stable_baselines3.common.policies import ActorCriticPolicy
+            model = ActorCriticPolicy.load(policy_path)
         else: # GAIL
             model = PPO.load(policy_path)
+            
+        # Restore original
+        torch.load = _original_load
         print("Model loaded successfully.")
     except Exception as e:
         print(f"Error loading model: {e}")
+        import traceback
+        traceback.print_exc()
         return
 
     # 3. Simulation Loop
@@ -87,6 +123,7 @@ if __name__ == "__main__":
     parser.add_argument("--gym", type=str, required=True, help="Environment: CartPole or Custom")
     parser.add_argument("--algorithm", type=str, default="BC", choices=["BC", "GAIL"], help="Algorithm used (needed for loading)")
     parser.add_argument("--mode", type=str, default="continuous", choices=["continuous", "step"], help="Execution mode")
+    parser.add_argument("--spawn", type=str, default="random", choices=["random", "fixed"], help="Spawn mode for GridWorld (random or fixed)")
     
     args = parser.parse_args()
-    run_policy(args.file, args.gym, args.algorithm, args.mode)
+    run_policy(args.file, args.gym, args.algorithm, args.mode, args.spawn)
