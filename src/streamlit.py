@@ -17,7 +17,7 @@ import pandas as pd
 
 # --- 1. CONFIGURAÇÃO INICIAL ---
 st.set_page_config(
-    page_title="IAPV Suite de Imitação",
+    page_title="IAPV Ambiente de Imitação",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -37,7 +37,7 @@ def inject_premium_css():
         with open(css_path, "r") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     else:
-        st.error(f"Erro: Arquivo de estilo {css_path} não encontrado.")
+        st.error(f"Erro: Ficheiro de estilo {css_path} não encontrado.")
 
 inject_premium_css()
 
@@ -126,7 +126,7 @@ st.markdown("""
         <span>⚡</span>
     </div>
     <div class="main-header-text">
-        <h1>IAPV Suite de Imitação</h1>
+        <h1>IAPV Ambiente de Imitação</h1>
         <div class="main-header-subtitle">Painel Avançado de Aprendizagem por Reforço <span style="opacity:0.6">&mdash; Grupo 7</span></div>
     </div>
 </div>
@@ -147,7 +147,7 @@ with st.sidebar:
                 <div class="sidebar-info-label">Espaço de Trabalho</div>
             </div>
         </div>
-        <div class="sidebar-info-body">Selecione o desafio.</div>
+        <div class="sidebar-info-body">Selecionar o desafio:</div>
     </div>
     """, unsafe_allow_html=True)
     if "selected_env" not in st.session_state: st.session_state.selected_env = "GridWorld (Custom)"
@@ -532,7 +532,7 @@ if "tab_bench" in locals():
 with tab_dash:
     st.markdown(f"""
 <div class="premium-card"><div style="display:flex; justify-content:space-between; align-items:flex-start;"><div>
-<h2 style="margin-top:0 !important; font-size:1.8rem;">Bem-vindo ao Suite</h2><div style="color:#a1a1aa; margin-top:0.5rem; font-size:1.1rem;">Ambiente Ativo: <strong style="color:#fff;">{selected_env}</strong></div></div>
+<h2 style="margin-top:0 !important; font-size:1.8rem;">Bem-vindo ao Ambiente de Testes!</h2><div style="color:#a1a1aa; margin-top:0.5rem; font-size:1.1rem;">Ambiente Ativo: <strong style="color:#fff;">{selected_env}</strong></div></div>
 <div style="background:rgba(99,102,241,0.1); color:#818cf8; padding:8px 16px; border-radius:20px; font-weight:600; font-size:0.9rem;">{env_display}</div></div>
 </div>
 """, unsafe_allow_html=True)
