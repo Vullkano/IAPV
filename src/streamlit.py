@@ -381,12 +381,13 @@ if "tab_bench" in locals():
                         script_path = os.path.join(ROOT_DIR, "src", "demos.py")
                         safe_path = fpath # Absolute path is correct
                         
+                        py_exe = sys.executable
                         use_pretrained_arg = " --use-pretrained" if not is_grid else ""
-                        cmd = f'python "{script_path}" --gym {"Custom" if is_grid else "CartPole"} --episodes {t_n} --file "{safe_path}" --spawn {spawn_mode if is_grid else "random"}{use_pretrained_arg}'
+                        cmd = f'"{py_exe}" "{script_path}" --gym {"Custom" if is_grid else "CartPole"} --episodes {t_n} --file "{safe_path}" --spawn {spawn_mode if is_grid else "random"}{use_pretrained_arg}'
                         
                         btn_label = "Gravar" if is_grid else "Gerar"
                         if st.button(btn_label, key=f"rec_{t_n}", disabled=False):
-                            subprocess.Popen(f'start cmd /k "{cmd}"', shell=True)
+                            subprocess.Popen(f'start "IAPV-BatchRec" cmd /k "{cmd}"', shell=True)
                             msg = f"A abrir gravador para {t_n}..." if is_grid else f"A gerar {t_n} amostras (HuggingFace)..."
                             st.toast(msg, icon="🎮" if is_grid else "🤖")
                 
@@ -612,7 +613,8 @@ with tab_rec:
                 if st.button("🚀 Lançar Gravador Externo", use_container_width=True, type="primary"):
                     try:
                         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                        subprocess.Popen(f'start cmd /k {cmd}', shell=True)
+                        # Fixed quoting for Windows shell
+                        subprocess.Popen(f'start "IAPV-Recorder" cmd /k "{cmd}"', shell=True)
                         st.toast("Terminal iniciado!", icon="🚀")
                     except Exception as e: st.error(f"Erro: {e}")
             
@@ -773,7 +775,7 @@ with tab_rec:
                 if st.button("🤖 Auto-Gerar", key="btn_cp_gen", use_container_width=True, type="primary", help="Usa um agente especialista do HuggingFace."):
                     try:
                         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                        subprocess.Popen(f'start cmd /k {cmd_auto}', shell=True)
+                        subprocess.Popen(f'start "IAPV-Auto" cmd /k "{cmd_auto}"', shell=True)
                         st.toast("A gerar demonstrações experientes...", icon="⏳")
                     except Exception as e: st.error(f"Erro: {e}")
             
@@ -781,7 +783,7 @@ with tab_rec:
                 if st.button("🕹️ Jogar Manual", key="btn_cp_manual", use_container_width=True, help="Abre uma janela para jogares (Setas Esquerda/Direita)."):
                     try:
                         os.makedirs(os.path.dirname(manual_out), exist_ok=True)
-                        subprocess.Popen(f'start cmd /k {cmd_manual}', shell=True)
+                        subprocess.Popen(f'start "IAPV-Manual" cmd /k "{cmd_manual}"', shell=True)
                         st.toast("Abre o CMD e Janela! Usa as SETAS.", icon="🕹️")
                     except Exception as e: st.error(f"Erro: {e}")
 
@@ -857,7 +859,8 @@ if "tab_train" in locals():
             if st.button("Iniciar Treino", disabled=not available, key="btn_train", use_container_width=True, type="primary"):
                 train_script = os.path.join(CURRENT_DIR, "train.py")
                 spawn_arg = spawn_mode if is_grid else "random"
-                cmd = f'python -u "{train_script}" --gym {clean_env_name} --file "{demos_file}" --output "{output_file}" --algorithm {t_algo} --epochs {t_epochs} --spawn {spawn_arg} --eval_episodes {t_eval_episodes}'
+                py_exe = sys.executable
+                cmd = f'"{py_exe}" -u "{train_script}" --gym {clean_env_name} --file "{demos_file}" --output "{output_file}" --algorithm {t_algo} --epochs {t_epochs} --spawn {spawn_arg} --eval_episodes {t_eval_episodes}'
                 # Start process unbuffered
                 process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, shell=True, bufsize=1, universal_newlines=True)
                 st.session_state.training_process = process
