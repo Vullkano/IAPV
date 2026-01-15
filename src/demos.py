@@ -313,20 +313,21 @@ if __name__ == "__main__":
     parser.add_argument("--spawn", type=str, default="random", choices=["random", "fixed"], help="Spawn mode for GridWorld (random or fixed)")
     args = parser.parse_args()
     validate_args(args)
-    args = parser.parse_args()
-    validate_args(args)
+    
+    import traceback
+    
     try:
         collect_demos(args.gym, args.episodes, args.file, args.use_pretrained, args.spawn)
+    except SystemExit:
+        # Expected exit from sys.exit(0)
+        pass
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"\n[CRITICAL ERROR] The program crashed: {e}")
-    finally:
-        print("\nPress Enter to exit...")
-        input()
         print("\n" + "="*50)
-        print("CRITICAL ERROR DURING DEMONSTRATION RECORDING")
+        print("CRITICAL ERROR DURING RECORDING")
         print("="*50)
         traceback.print_exc()
         print("="*50)
-        input("\nPress ENTER to close this window...")
+        input("\nPress ENTER to close...")
+    finally:
+        # Optional pause if needed, but usually sys.exit handles it
+        pass

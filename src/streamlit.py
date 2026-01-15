@@ -66,7 +66,12 @@ def load_model(algo, gym_name, spawn_mode="random"):
     
     # FALLBACK: If specific manual model missing, look in intervals/models (Benchmark)
     if not os.path.exists(path):
-        bench_dir = os.path.join(folder_path, "intervals", "models")
+        # Fix: Benchmark intervals are stored in env_root/intervals, not env_root/simple/intervals
+        # If folder_path ends with "simple", go up one level
+        if folder_path.endswith("simple"):
+            bench_dir = os.path.join(os.path.dirname(folder_path), "intervals", "models")
+        else:
+            bench_dir = os.path.join(folder_path, "intervals", "models")
         if os.path.exists(bench_dir):
             # Find matching algo files
             candidates = [f for f in os.listdir(bench_dir) if f.startswith(algo) and f.endswith(".zip")]
