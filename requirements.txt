@@ -1,9 +1,13 @@
 gymnasium
 imitation
 stable-baselines3
+torch
 numpy
 pygame
 streamlit
 matplotlib
-flask 
+seaborn
+pandas
+huggingface-sb3
+tqdm
 pillow
