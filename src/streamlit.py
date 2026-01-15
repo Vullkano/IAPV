@@ -78,7 +78,7 @@ def load_model(algo, gym_name, spawn_mode="random"):
                 path = os.path.join(bench_dir, candidates[-1])
                 # Warn/Toast would be nice but we are in a cached function.
                 
-    if not os.path.exists(path): return None, f"Modelo não encontrado: {path}"
+    if not os.path.exists(path): return None, f"Modelo não encontrado: {path}", None
     
     try:
         _original_load = torch.load
@@ -95,8 +95,8 @@ def load_model(algo, gym_name, spawn_mode="random"):
             except: model = ActorCriticPolicy.load(path)
             
         torch.load = _original_load
-        return model, None
-    except Exception as e: return None, str(e)
+        return model, None, path
+    except Exception as e: return None, str(e), path
 
 # --- 4. RENDERIZAÇÃO MODERNA (HTML RETORNADO) ---
 def get_grid_html(size, agent_pos, target_pos, walls):
@@ -1012,11 +1012,13 @@ if "tab_viz" in locals():
                 v_episodes = 1
                 st.markdown('<div style="background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:6px; border:1px solid #3f3f46; font-size:0.85rem; color:#a1a1aa; margin-bottom:12px;">Simulação Fixa: <strong>1 Episódio</strong></div>', unsafe_allow_html=True)
             
-            model_loaded, err = load_model(v_algo, clean_env_name)
+            model_loaded, err, loaded_path = load_model(v_algo, clean_env_name, spawn_mode=spawn_mode)
             status_color = "#10b981" if model_loaded else "#ef4444"; status_msg = "Pronto a Simular" if model_loaded else "Modelo em falha"
             st.markdown(f"""<div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:6px; margin:12px 0; border:1px solid #27272a; display:flex; align-items:center; gap:10px;"><div style="width:10px; height:10px; border-radius:50%; background:{status_color}; box-shadow:0 0 8px {status_color};"></div><div style="font-size:0.9rem; color:#ededed;">{status_msg}</div></div>""", unsafe_allow_html=True)
             if model_loaded:
-                if st.button("▶️ Simular", use_container_width=True, type="primary"): st.session_state.viz_active = True
+                if st.button("▶️ Simular", use_container_width=True, type="primary"): 
+                    st.session_state.viz_active = True
+                    st.session_state.loaded_model_path = loaded_path
             else: st.error("Ficheiro do modelo não encontrado.")
             st.markdown('</div>', unsafe_allow_html=True)
             if st.session_state.get("viz_active"):
@@ -1029,14 +1031,8 @@ if "tab_viz" in locals():
                 status_box = st.empty()
                 env_id = "GridWorld-v0" if is_grid else "CartPole-v1"
                 
-                # Check for VecNorm
-                # Use env_folder which already has spawn mode
-                # For GridWorld, single runs go to 'simple' subfolder
-                v_folder = os.path.join(env_folder, "simple") if is_grid else env_folder
-
-                model_filename = f"{v_algo.lower()}_{'grid' if is_grid else 'cartpole'}.zip"
-                model_path = os.path.join(OUTPUT_DIR, v_folder, model_filename)
-                vec_norm_path = model_path.replace(".zip", "_vecnorm.pkl")
+                model_path = st.session_state.get("loaded_model_path", "")
+                vec_norm_path = model_path.replace(".zip", "_vecnorm.pkl") if model_path else ""
                 
                 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
                 base_env = gym.make(env_id, render_mode="rgb_array")
