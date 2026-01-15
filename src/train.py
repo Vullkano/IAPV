@@ -4,6 +4,8 @@ import numpy as np
 import os
 import sys
 import torch
+import random
+import pickle
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.ppo import MlpPolicy
@@ -41,8 +43,6 @@ from stable_baselines3.common.evaluation import evaluate_policy
 def train(demos_path, output_path, env_name, algorithm, epochs, spawn_mode="random", eval_episodes=100, seed=None):
     # Set global seeds if provided
     if seed is not None:
-        import torch
-        import random
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
@@ -98,7 +98,6 @@ def train(demos_path, output_path, env_name, algorithm, epochs, spawn_mode="rand
     # ---------------------------
     
     # Load Demos (Robust Pickle Load)
-    import pickle
     
     # Handle directory input
     if os.path.isdir(demos_path):
