@@ -54,6 +54,66 @@ def get_key():
         return mapping.get(key, None)
     return None
 
+def get_key_pygame():
+    """Reads arrow keys from Pygame directly."""
+    import pygame
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            return "QUIT"
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                return "QUIT"
+            if event.key == pygame.K_LEFT:
+                return 0 # Left
+            if event.key == pygame.K_RIGHT:
+                return 1 # Right
+            # GridWorld mappings
+            if event.key == pygame.K_UP:
+                return 1 # Up for GridWorld? (Check mapping)
+                # Wait, GridWorld uses: 
+                # 0: Right, 1: Up, 2: Left, 3: Down
+            pass
+    
+    # For continuous polling or state check
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_ESCAPE]: return "QUIT"
+    if keys[pygame.K_LEFT]: return "LEFT"
+    if keys[pygame.K_RIGHT]: return "RIGHT"
+    if keys[pygame.K_UP]: return "UP"
+    if keys[pygame.K_DOWN]: return "DOWN"
+    
+    return None
+
+def get_action_pygame(env_name):
+    """
+    Unified input handler using Pygame.
+    Non-blocking: Returns action if key is held, else None.
+    Pumps events to keep window alive.
+    """
+    import pygame
+    
+    # Pump events handling
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+             return "QUIT"
+        if event.type == pygame.KEYDOWN:
+             if event.key == pygame.K_ESCAPE: return "QUIT"
+
+    # Continuous check
+    keys = pygame.key.get_pressed()
+    
+    if env_name == "Custom":
+        if keys[pygame.K_RIGHT]: return 0
+        if keys[pygame.K_UP]: return 1
+        if keys[pygame.K_LEFT]: return 2
+        if keys[pygame.K_DOWN]: return 3
+    else:
+        # CartPole Mapping
+        if keys[pygame.K_LEFT]: return 0
+        if keys[pygame.K_RIGHT]: return 1
+        
+    return None
+
 def save_trajectories(trajectories, file_path):
     """
     Salva as trajetórias de forma robusta (temp file + rename).
@@ -99,7 +159,9 @@ def collect_demos(env_name, num_episodes, output_file, use_pretrained=False, spa
     print(f"Collecting {num_episodes} episodes on {env_name}...")
     if env_name == "Custom":
         # Register GridWorld with spawn mode
+        print(f"DEBUG: GridWorld Spawn Mode Arg: {spawn_mode}")
         random_start = (spawn_mode == "random")
+        print(f"DEBUG: random_start calculated as: {random_start}")
         try:
             register(
                 id="GridWorld-v0",
@@ -107,11 +169,14 @@ def collect_demos(env_name, num_episodes, output_file, use_pretrained=False, spa
                 max_episode_steps=LIMIT_STEPS,
                 kwargs={'size': GRID_SIZE, 'random_start': random_start}
             )
-        except:
-            pass
+        except Exception as e:
+            print(f"[DEBUG] Registration warning: {e}")
+        
         gym_id = "GridWorld-v0"
         try:
-            env = gym.make(gym_id, render_mode="human")
+            # Force random_start in make to ensure it overrides defaults/cache
+            print(f"[DEBUG] Calling gym.make with random_start={random_start}")
+            env = gym.make(gym_id, render_mode="human", random_start=random_start)
         except Exception as e:
             print(f"Error creating environment '{gym_id}': {e}")
             return
@@ -166,18 +231,42 @@ def collect_demos(env_name, num_episodes, output_file, use_pretrained=False, spa
             while not done:
                 action = None
                 while action is None:
-                    k = get_key()
-                    if k == "QUIT":
-                        print("Exiting...")
-                        env.close()
-                        sys.exit(0)
-                    if env_name == "CartPole" or env_name == "CartPole-v1":
-                        if k == 2: action = 0 # Left
-                        elif k == 0: action = 1 # Right
-                        # Ignore other keys (Up/Down)
+                    # Use Pygame input if available (CartPole uses pygame via gymnasium)
+                    # GridWorld might use simple console or pygame depending on render mode
+                    
+                    # Check if we can use pygame logic
+                    USE_PYGAME_INPUT = False
+                    if (env_name == "CartPole" or env_name == "CartPole-v1") and hasattr(env, 'render_mode') and env.render_mode == "human":
+                        # If human render, getting input from window is best
+                        USE_PYGAME_INPUT = True
+                        
+                    if USE_PYGAME_INPUT:
+                        res = get_action_pygame(env_name)
+                        if res == "QUIT":
+                            print("Exiting...")
+                            env.close()
+                            sys.exit(0)
+                        
+                        if res is not None:
+                            action = res
+                        else:
+                            # Render and short sleep to allow "Pause" effect
+                            if hasattr(env, 'render_mode') and env.render_mode == "human":
+                                env.render()
+                            time.sleep(0.02) # 50Hz polling when idle
+                            
                     else:
-                        # GridWorld mapping
-                        action = k
+                        # Fallback to MSVCRT (Console) for GridWorld
+                        if msvcrt.kbhit():
+                            k = get_key() # Old function
+                            if k == "QUIT":
+                                print("Exiting...")
+                                env.close()
+                                sys.exit(0)
+                            if env_name == "Custom":
+                                action = k
+                        else:
+                            time.sleep(0.05)
                 next_obs, reward, terminated, truncated, info = env.step(action)
                 done = terminated or truncated
                 os.system('cls' if os.name == 'nt' else 'clear')
@@ -224,10 +313,17 @@ if __name__ == "__main__":
     parser.add_argument("--spawn", type=str, default="random", choices=["random", "fixed"], help="Spawn mode for GridWorld (random or fixed)")
     args = parser.parse_args()
     validate_args(args)
+    args = parser.parse_args()
+    validate_args(args)
     try:
         collect_demos(args.gym, args.episodes, args.file, args.use_pretrained, args.spawn)
     except Exception as e:
         import traceback
+        traceback.print_exc()
+        print(f"\n[CRITICAL ERROR] The program crashed: {e}")
+    finally:
+        print("\nPress Enter to exit...")
+        input()
         print("\n" + "="*50)
         print("CRITICAL ERROR DURING DEMONSTRATION RECORDING")
         print("="*50)
