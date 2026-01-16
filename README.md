@@ -30,9 +30,9 @@ streamlit run src/streamlit.py
 
 *   **Mission Control UI:** Painéis de controlo estilizados para gravação e treino, com feedback visual em tempo real.
 *   **Modo de Spawn (GridWorld):** Alternância entre spawn **Aleatório** (🎲) e **Fixo** (📍) para testar a capacidade de generalização.
-*   **Gravação Híbrida:** 
-    *   **GridWorld:** Controlo via D-Pad (Web) ou CLI (Teclado).
-    *   **CartPole:** Geração automática via HuggingFace ou modo manual experimental com mapping de setas.
+*   **Controlo Híbrido Avançado:** 
+    *   **GridWorld:** Controlo preciso via CLI/Console (compatível com `msvcrt`).
+    *   **CartPole:** Sistema **"Hold-to-Move"** desenvolvido em Pygame que permite segurar as setas para movimento contínuo sem bloquear a janela gráfica.
 *   **Laboratório de Treino:** Configuração dinâmica de parâmetros (Epochs, Seeds, Validação) com logs estilo terminal integrados.
 *   **Robustez Estatística:** Sistema automático de validação que utiliza janelas de sementes dinâmicas (`seed + i`) para gerar distribuições de recompensa reais no box plot.
 *   **Benchmark Automatizado:** Treino em batch com datasets incrementais para analisar curvas de aprendizagem.
@@ -132,7 +132,10 @@ IAPV/
 
 ## 🚀 Notas de Execução
 
-- **Teclado (Manual):** Nos modos manuais (`demos.py`), utilize as **Setas** para movimento. Pressione **ESC** para sair antecipadamente e salvar os dados recolhidos até ao momento.
+- **Teclado (Manual):** 
+    - **GridWorld:** Use as setas no terminal/consola.
+    - **CartPole:** Use as setas na janela gráfica (Pygame). **Dica:** Pressione e segure para mover o carro continuamente (Hold-to-Move).
+- **Visualização Inteligente:** Se não existir um modelo treinado manualmente, o sistema procurará automaticamente na pasta de *Benchmark* (`intervals/models`) pelo melhor modelo disponível.
 - **Gráficos:** No tab "Relatório", utilize o botão **"Atualizar Gráficos"** após o treino em batch para regenerar as imagens em `docs/plots/`.
 - **Compatibilidade:** O código utiliza as versões mais recentes do **Gymnasium** e **Stable Baselines 3**, garantindo longevidade e suporte a novas funcionalidades de RL.
 
