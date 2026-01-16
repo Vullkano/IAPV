@@ -147,3 +147,4 @@ Trabalho desenvolvido para a Unidade Curricular de **IAPV**.
 - Diogo Alexandre Alonso de Freitas (Nº104841)
 - João Francisco Marques Gonçalves da Silva Botas (Nº104782)
 - Miguel Gonçalves Pereira (Nº105944)
+- Ana Sofia Semião de Mendonça Trabulo (Nº93273)
