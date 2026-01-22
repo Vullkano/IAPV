@@ -51,7 +51,7 @@ try:
 except:
     pass
 
-@st.cache_resource
+# @st.cache_resource
 def load_model(algo, gym_name, spawn_mode="random"):
     # USE OUTPUT_DIR DEFINED AT TOP
     if gym_name == "Custom":
@@ -65,25 +65,34 @@ def load_model(algo, gym_name, spawn_mode="random"):
     path = os.path.join(folder_path, filename)
     
     # FALLBACK: If specific manual model missing, look in intervals/models (Benchmark)
-    if not os.path.exists(path):
-        # Fix: Benchmark intervals are stored in env_root/intervals, not env_root/simple/intervals
-        # If folder_path ends with "simple", go up one level
-        if folder_path.endswith("simple"):
-            bench_dir = os.path.join(os.path.dirname(folder_path), "intervals", "models")
-        else:
-            bench_dir = os.path.join(folder_path, "intervals", "models")
-        if os.path.exists(bench_dir):
-            # Find matching algo files
-            candidates = [f for f in os.listdir(bench_dir) if f.startswith(algo) and f.endswith(".zip")]
-            if candidates:
-                # Pick the one with highest demos number (usually nicely named Algo_N_seed.zip)
-                # Simple sort by name works for 10, 20... wait. 10 vs 100. Length sorting or specific?
-                # Just sorting by modification time or name is a decent heuristic.
-                candidates.sort() # Algo_10, Algo_20, Algo_50
-                path = os.path.join(bench_dir, candidates[-1])
-                # Warn/Toast would be nice but we are in a cached function.
+    # FALLBACK REMOVED
+    # if not os.path.exists(path):
+    #     # Fix: Benchmark intervals are stored in env_root/intervals, not env_root/simple/intervals
+    #     # If folder_path ends with "simple", go up one level
+    #     if folder_path.endswith("simple"):
+    #         bench_dir = os.path.join(os.path.dirname(folder_path), "intervals", "models")
+    #     else:
+    #         bench_dir = os.path.join(folder_path, "intervals", "models")
+    #     if os.path.exists(bench_dir):
+    #         # Find matching algo files
+    #         candidates = [f for f in os.listdir(bench_dir) if f.startswith(algo) and f.endswith(".zip")]
+    #         if candidates:
+    #             # Pick the one with highest demos number (usually nicely named Algo_N_seed.zip)
+    #             # Simple sort by name works for 10, 20... wait. 10 vs 100. Length sorting or specific?
+    #             # Just sorting by modification time or name is a decent heuristic.
+    #             candidates.sort() # Algo_10, Algo_20, Algo_50
+    #             path = os.path.join(bench_dir, candidates[-1])
+    #             # Warn/Toast would be nice but we are in a cached function.
                 
-    if not os.path.exists(path): return None, f"Modelo não encontrado: {path}", None
+    st.toast(f"Checking path: {path}")
+    try:
+        if os.path.exists(os.path.dirname(path)):
+            st.toast(f"Files in dir: {os.listdir(os.path.dirname(path))}")
+        else:
+            st.toast(f"Dir does not exist: {os.path.dirname(path)}")
+    except: pass
+
+    # if not os.path.exists(path): return None, f"Modelo não encontrado: {path}", None
     
     try:
         _original_load = torch.load
@@ -1029,7 +1038,7 @@ if "tab_viz" in locals():
                 if st.button("▶️ Simular", use_container_width=True, type="primary"): 
                     st.session_state.viz_active = True
                     st.session_state.loaded_model_path = loaded_path
-            else: st.error("Ficheiro do modelo não encontrado.")
+            else: st.error(err)
             st.markdown('</div>', unsafe_allow_html=True)
             if st.session_state.get("viz_active"):
                 if st.button("⏹️ Parar Simulação", use_container_width=True): st.session_state.viz_active = False; st.rerun()
